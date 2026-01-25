@@ -131,7 +131,7 @@ public class UsuarioService {
         return usuarios.stream()
             .map(usuario -> new UsuarioPublicDTO(
                 usuario.getId(),
-                usuario.getUsername(),
+                usuario.getNickName(),
                 usuario.getNome()
             ))
             .toList();

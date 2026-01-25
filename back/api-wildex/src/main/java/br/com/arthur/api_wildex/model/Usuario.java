@@ -50,7 +50,7 @@ public class Usuario implements UserDetails {
     @NotBlank
     @Size(max = 30)
     @Column(nullable = false, length = 30)
-    private String username;
+    private String nickname;
 
     @NotBlank
     @Size(max = 100)
@@ -185,11 +185,11 @@ public class Usuario implements UserDetails {
     }
 
     public String getNickName() {
-        return username;
+        return nickname;
     }
 
-    public void setNickName(String username) {
-        this.username = username;
+    public void setNickName(String nickname) {
+        this.nickname = nickname;
     }
 
     public String getEmail() {

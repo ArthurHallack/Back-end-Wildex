@@ -5,11 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.util.Optional;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import br.com.arthur.api_wildex.dto.UsuarioFichaDTO;
+import br.com.arthur.api_wildex.dto.UsuarioPublicDTO;
 import br.com.arthur.api_wildex.model.Usuario;
 import br.com.arthur.api_wildex.repositories.UserRepository;
 
@@ -151,8 +152,36 @@ public class UsuarioServiceTest {
     }
 
     @Test
-    void usuarioCriado () {
+    void buscaUsuarioPorNome () {
+
+        String termo = "goku";
+
+        Usuario u1 = new Usuario();
+        ReflectionTestUtils.setField(u1, "id", 1L);
+        u1.setNickName("GokuSuper");
+        u1.setNome("Son Goku");
+
+        Usuario u2 = new Usuario();
+        ReflectionTestUtils.setField(u2, "id", 2L);
+        u2.setNickName("GokuSsb");
+        u2.setNome("Goku Blue");
+
+        List<Usuario> listaSimulada = List.of(u1, u2);
+
+        Mockito.when(repository.findByUsernameContainingIgnoreCaseOrNomeContainingIgnoreCase(termo, termo))
+           .thenReturn(listaSimulada);
+
+        List<UsuarioPublicDTO> resultado = service.buscarPorUsernameOuNome(termo);
+
+        assertNotNull(resultado);
+        assertEquals(2, resultado.size()); // Garante que retornou a quantidade certa
         
-    }
+        assertEquals(1L, resultado.get(0).getId());
+        assertEquals("GokuSuper", resultado.get(0).getUsername());
+        assertEquals("Son Goku", resultado.get(0).getNome());
+
+        verify(repository, times(1))
+            .findByUsernameContainingIgnoreCaseOrNomeContainingIgnoreCase(termo, termo);
+        }
 
 }
