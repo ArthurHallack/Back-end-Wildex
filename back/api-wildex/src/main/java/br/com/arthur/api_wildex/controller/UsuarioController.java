@@ -1,6 +1,7 @@
 package br.com.arthur.api_wildex.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -45,22 +46,31 @@ public class UsuarioController {
     }
     //metodos
     @PostMapping("/grava")
-    public ResponseEntity<UsuarioGravaResponseDTO> criar (@RequestBody Usuario usuario) {
+    public ResponseEntity<?> criar(@RequestBody Usuario usuario) {
+        try {
+            Usuario criado = service.criar(usuario);
 
-        Usuario criado = service.criar(usuario);
+            UsuarioGravaResponseDTO response = new UsuarioGravaResponseDTO(
+                criado.getId(),
+                criado.getUsername(),
+                criado.getNome(),
+                criado.getEmail(),
+                criado.getPais(),
+                criado.getDataNascimento(),
+                criado.getRole(),
+                criado.getStatus()
+            );
 
-        UsuarioGravaResponseDTO response = new UsuarioGravaResponseDTO(
-            criado.getId(),
-            criado.getUsername(),
-            criado.getNome(),
-            criado.getEmail(),
-            criado.getPais(),
-            criado.getDataNascimento(),
-            criado.getRole(),
-            criado.getStatus()
-        );
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response); // 201
+        } catch (IllegalArgumentException e) {
+            // 400 Bad Request + mensagem
+            return ResponseEntity.badRequest()
+                                .body(Map.of(
+                                    "status", 400,
+                                    "error", "Bad Request",
+                                    "message", e.getMessage()
+                                ));
+        }
     }
 
     @GetMapping("/ficha/{id}")
@@ -80,15 +90,23 @@ public class UsuarioController {
 
         List<UsuarioPublicDTO> usuarios = service.buscarPorUsernameOuNome(termo);
 
+        if (usuarios.isEmpty()) {
+            // Nenhum usuário encontrado → 404
+            return ResponseEntity.notFound().build();
+        }
+
         return ResponseEntity.ok(usuarios);
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Void> deletar (@PathVariable("id") Long id) {
+    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+        boolean deletado = service.deletar(id);
 
-        service.deletar(id);
-
-        return ResponseEntity.noContent().build();
+        if (deletado) {
+            return ResponseEntity.noContent().build(); // 204
+        } else {
+            return ResponseEntity.notFound().build(); // 404
+        }
     }
 
     @PutMapping("/atualiza/{id}")
@@ -108,9 +126,8 @@ public class UsuarioController {
     }
 
     @PostMapping("/logon")
-    public ResponseEntity<UsuarioLoginResponseDTO> logar(
+    public ResponseEntity<?> logar(
             @RequestBody UsuarioLoginDTO dto) {
-
         try {
 
             Authentication authToken =
@@ -141,9 +158,13 @@ public class UsuarioController {
             return ResponseEntity.ok(response);
 
         } catch (AuthenticationException e) {
-
-            // 401 = não autenticado
-            return ResponseEntity.status(401).build();
+            // Retorna 401 com JSON
+            Map<String, Object> erro = Map.of(
+                "status", 401,
+                "error", "Unauthorized",
+                "message", "Login ou senha incorretos"
+            );
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(erro);
         }
     }
 

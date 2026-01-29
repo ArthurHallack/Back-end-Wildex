@@ -18,6 +18,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import br.com.arthur.api_wildex.security.filter.JwtFilter;
+import jakarta.servlet.http.HttpServletResponse;
 
 /*
  * @Configuration
@@ -64,6 +65,21 @@ public class SecurityConfig {
 
 
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((request, response, authException) -> {
+                    // Aqui retorna 401 para qualquer requisição sem token ou token inválido
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+                    response.getWriter().write("""
+                        {
+                          "status": 401,
+                          "error": "Unauthorized",
+                          "message": "Token inválido ou ausente"
+                        }
+                    """);
+                })
+            )
 
             /*
              * AUTORIZAÇÃO DAS ROTAS

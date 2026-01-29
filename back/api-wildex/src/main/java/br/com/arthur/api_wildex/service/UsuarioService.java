@@ -95,12 +95,12 @@ public class UsuarioService {
         return repository.save(usuario);
     }
 
-    public void deletar(Long idUsuario) {
-
-        Usuario usuario = repository.findById(idUsuario)
-            .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
-    
-        repository.delete(usuario);
+    public boolean deletar(Long id) {
+        if (!repository.existsById(id)) {
+            return false;
+        }
+        repository.deleteById(id);
+        return true;
     }
     
     public UsuarioFichaDTO encontrarUsuario(Long idUsuario){
